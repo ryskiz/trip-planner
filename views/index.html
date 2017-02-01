@@ -1,0 +1,234 @@
+{% extends 'layout.html' %}
+
+{% block title %}Your Trip{% endblock %}
+
+{% block content %}
+<div id="app" class="clearfix">
+    <div class="map-container col-sm-8 col-lg-9">
+        <div>
+            <div id="map-canvas"></div>
+        </div>
+    </div>
+    <div id="control-panel" class="col-sm-4 col-lg-3 clearfix">
+        <div class="col-xs-6 col-sm-12">
+            <div class="panel panel-default">
+                <div class="panel-body" id="options-panel">
+                    <div>
+                        <h4>Hotels</h4>
+                        <select data-type="hotel" id="hotel-choices">
+
+                        </select>
+                        <button data-action="add" class="btn btn-primary btn-circle pull-right">+</button>
+                    </div>
+                    <div>
+                        <h4>Restaurants</h4>
+                        <select data-type="restaurant" id="restaurant-choices">
+
+                        </select>
+                        <button data-action="add" class="btn btn-primary btn-circle pull-right">+</button>
+                    </div>
+                    <div>
+                        <h4>Activities</h4>
+                        <select data-type="activity" id="activity-choices">
+                            <!--<option>Mahayana Buddhist Temple Association</option>-->
+                            <!--<option>...</option>-->
+                        </select>
+                        <button data-action="add" class="btn btn-primary btn-circle pull-right">+</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xs-6 col-sm-12">
+            <h3>
+        <span id="day-title">
+          <span>Day 2</span>
+          <button class="btn btn-xs btn-danger remove btn-circle">x</button>
+        </span>
+            </h3>
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <div class="day-buttons">
+                        <button class="btn btn-circle day-btn current-day not-add">1</button>
+                        <button class="btn btn-circle day-btn" id="day-add">+</button>
+                    </div>
+                </div>
+                <div class="panel-body" id="itinerary">
+                    <div>
+                        <h4>My Hotel</h4>
+                        <ul class="list-group" id="hotelsList">
+                        </ul>
+                    </div>
+                    <div>
+                        <h4>My Restaurants</h4>
+                        <ul class="list-group" id="restaurantsList">
+                        </ul>
+                    </div>
+                    <div>
+                        <h4>My Activities</h4>
+                        <ul class="list-group" id="activitiesList">
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    var hotels = {{hotels | dump | safe}};
+    var restaurants = {{restaurants | dump | safe}};
+    var activities = {{activities | dump | safe}};
+
+    $(document).ready(function(){
+        $(function initializeMap (){
+            var markers = [];
+
+            var fullstackAcademy = new google.maps.LatLng(40.705086, -74.009151);
+
+            var styleArr = [{
+                featureType: 'landscape',
+                stylers: [{ saturation: -100 }, { lightness: 60 }]
+            }, {
+                featureType: 'road.local',
+                stylers: [{ saturation: -100 }, { lightness: 40 }, { visibility: 'on' }]
+            }, {
+                featureType: 'transit',
+                stylers: [{ saturation: -100 }, { visibility: 'simplified' }]
+            }, {
+                featureType: 'administrative.province',
+                stylers: [{ visibility: 'off' }]
+            }, {
+                featureType: 'water',
+                stylers: [{ visibility: 'on' }, { lightness: 30 }]
+            }, {
+                featureType: 'road.highway',
+                elementType: 'geometry.fill',
+                stylers: [{ color: '#ef8c25' }, { lightness: 40 }]
+            }, {
+                featureType: 'road.highway',
+                elementType: 'geometry.stroke',
+                stylers: [{ visibility: 'off' }]
+            }, {
+                featureType: 'poi.park',
+                elementType: 'geometry.fill',
+                stylers: [{ color: '#b6c54c' }, { lightness: 40 }, { saturation: -40 }]
+            }];
+
+            var mapCanvas = document.getElementById('map-canvas');
+
+            var currentMap = new google.maps.Map(mapCanvas, {
+                center: fullstackAcademy,
+                zoom: 13,
+                mapTypeId: google.maps.MapTypeId.ROADMAP,
+                styles: styleArr
+            });
+
+            var iconURLs = {
+                hotel: '/images/lodging_0star.png',
+                restaurant: '/images/restaurant.png',
+                activity: '/images/star-3.png'
+            };
+            function drawMarker (type, coords, name) {
+                var latLng = new google.maps.LatLng(coords[0], coords[1]);
+                var iconURL = iconURLs[type];
+                var name = name;
+                var marker = new google.maps.Marker({
+                    icon: iconURL,
+                    position: latLng,
+                    name: name
+                });
+                marker.setMap(currentMap);
+                markers.unshift(marker);
+
+            }
+
+            //variables
+            let $hotel = $('#hotel-choices');
+            let $restaurants = $('#restaurant-choices');
+            let $activities = $('#activity-choices');
+            let $hotelList = $('#hotelsList');
+            let $restaurantList = $('#restaurantsList');
+            let $activityList = $('#activitiesList');
+            let $dayButtons = $('.day-buttons');
+
+            //button variables
+            let $addHotel = $('#hotel-choices + button');
+            let $addRestaurant = $('#restaurant-choices + button');
+            let $addActivity = $('#activity-choices + button');
+
+            $hotel.append($('<option>hotels</option>'));
+            $restaurants.append($('<option>restaurants</option>'));
+            $activities.append($('<option>activities</option>'));
+
+            //append all options from db
+            hotels.forEach((hotel) => {
+                $hotel.append($('<option>'+ hotel.name +'</option>'));
+            });
+            restaurants.forEach((rest) => {
+                $restaurants.append($('<option>'+ rest.name +'</option>'));
+            });
+            activities.forEach((act) => {
+                $activities.append($('<option>'+ act.name +'</option>'));
+            });
+
+            //add event listeners
+            $addHotel.on('click', function(){
+                $hotelList.append('<div class="itinerary-item"><span>' + $hotel.val() + '</span><button class="btn btn-xs btn-danger remove btn-circle" id="hotelRemove">x</button></div>');
+                var hotel = hotels.filter((obj) => {
+                    if(obj.name == $hotel.val()) return obj;
+                });
+                drawMarker('hotel', [hotel[0].place.location[0], hotel[0].place.location[1]], $hotel.val());
+            });
+            $addRestaurant.on('click', function(){
+                $restaurantList.append('<div class="itinerary-item"><span>' + $restaurants.val() + '</span><button class="btn btn-xs btn-danger remove btn-circle" id="hotelRemove">x</button></div>');
+                var restaurant = restaurants.filter((obj) => {
+                    if(obj.name == $restaurants.val()) return obj;
+                });
+                drawMarker('restaurant', [restaurant[0].place.location[0], restaurant[0].place.location[1]], $restaurants.val());
+            });
+            $addActivity.on('click', function(){
+                $activityList.append('<div class="itinerary-item"><span>' + $activities.val() + '</span><button class="btn btn-xs btn-danger remove btn-circle">x</button></div>');
+                var act = activities.filter((obj) => {
+                    if(obj.name == $activities.val()) return obj;
+                });
+                drawMarker('activity', [act[0].place.location[0], act[0].place.location[1]], $activities.val());
+            });
+            //delete-marker
+            $('.list-group').on('click', 'button', function(){
+                $clicked = $(this);
+                var hotel = hotels.filter((obj) => {
+                    if(obj.name + 'x' == $clicked.parent()[0].outerText) return obj;
+                });
+                var restaurant = restaurants.filter((obj) => {
+                    if(obj.name + 'x' == $clicked.parent()[0].outerText) return obj;
+                });
+                var activity = activities.filter((obj) => {
+                    if(obj.name + 'x' == $clicked.parent()[0].outerText) return obj;
+                });
+
+                let array = markers.filter((marker) => {
+                    if((hotel[0] && marker.name == hotel[0].name) || (restaurant[0] && marker.name == restaurant[0].name) || (activity[0] && marker.name == activity[0].name)) return marker;
+                });
+                console.log(array);
+                array[0].setMap(null);
+                $clicked.parent().remove();
+            });
+            //add day
+            $('#day-add').on('click', function(){
+                $('<button class="btn btn-circle day-btn not-add">'+ 4 +'</button>').insertBefore('#day-add');
+            })
+            $('.day-buttons').on('click', '.not-add', function(){
+                $clicked = $(this);
+                $('.current-day').removeClass('current-day');
+                $clicked.addClass('current-day');
+            })
+
+
+
+        });
+    })
+</script>
+{% endblock %}
+
+<!--#f7f7f7-->
+<!--'TradeGothicW01-BoldCn20 675334'-->
+<!--'Proxima N W01 Bold', Helvetica, Arial, sans-serif;-->
