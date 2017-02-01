@@ -170,15 +170,30 @@
                 $activities.append($('<option>'+ act.name +'</option>'));
             });
 
+            let daysArray = [{
+                hotels: null,
+                restaurants: [],
+                activities: []
+            }];
+
             //add event listeners
             $addHotel.on('click', function(){
+                let $currentDay = +$('.current-day').text();
+                daysArray[$currentDay - 1].hotels = $hotel.val();
+
                 $hotelList.append('<div class="itinerary-item"><span>' + $hotel.val() + '</span><button class="btn btn-xs btn-danger remove btn-circle" id="hotelRemove">x</button></div>');
+
                 var hotel = hotels.filter((obj) => {
                     if(obj.name == $hotel.val()) return obj;
                 });
                 drawMarker('hotel', [hotel[0].place.location[0], hotel[0].place.location[1]], $hotel.val());
             });
+
             $addRestaurant.on('click', function(){
+                let $currentDay = +$('.current-day').text();
+                daysArray[$currentDay - 1].restaurants.push($restaurants.val());
+
+
                 $restaurantList.append('<div class="itinerary-item"><span>' + $restaurants.val() + '</span><button class="btn btn-xs btn-danger remove btn-circle" id="hotelRemove">x</button></div>');
                 var restaurant = restaurants.filter((obj) => {
                     if(obj.name == $restaurants.val()) return obj;
@@ -186,12 +201,16 @@
                 drawMarker('restaurant', [restaurant[0].place.location[0], restaurant[0].place.location[1]], $restaurants.val());
             });
             $addActivity.on('click', function(){
+                let $currentDay = +$('.current-day').text();
+                daysArray[$currentDay - 1].activities.push($activities.val());
+
                 $activityList.append('<div class="itinerary-item"><span>' + $activities.val() + '</span><button class="btn btn-xs btn-danger remove btn-circle">x</button></div>');
                 var act = activities.filter((obj) => {
                     if(obj.name == $activities.val()) return obj;
                 });
                 drawMarker('activity', [act[0].place.location[0], act[0].place.location[1]], $activities.val());
             });
+
             //delete-marker
             $('.list-group').on('click', 'button', function(){
                 $clicked = $(this);
@@ -213,8 +232,35 @@
                 $clicked.parent().remove();
             });
             //add day
+
+
+
+
+
             $('#day-add').on('click', function(){
-                $('<button class="btn btn-circle day-btn not-add">'+ 4 +'</button>').insertBefore('#day-add');
+                //Loops through to find current days
+                //debugger
+
+
+
+//                $('.not-add').each(function() {
+//                    if(daysArray.length < +$(this).text()) {
+//                        daysArray.push({});
+//                    }
+//                    console.log(daysArray);
+//                });
+
+                let daysObj = {
+                    hotels: null,
+                    restaurants: [],
+                    activities: []
+                }
+
+                daysArray.push(daysObj);
+                console.log(daysArray);
+
+                //Adds the next day
+                $('<button class="btn btn-circle day-btn not-add">'+ daysArray.length + '</button>').insertBefore('#day-add');
             })
             $('.day-buttons').on('click', '.not-add', function(){
                 $clicked = $(this);
@@ -223,12 +269,12 @@
             })
 
 
+            //Switch Days
+            let currentDay = $('.panel-body')
+
+
 
         });
     })
 </script>
 {% endblock %}
-
-<!--#f7f7f7-->
-<!--'TradeGothicW01-BoldCn20 675334'-->
-<!--'Proxima N W01 Bold', Helvetica, Arial, sans-serif;-->
